@@ -5,133 +5,176 @@ from pathlib import Path
 # Make the output folder once, before the loop.
 Path("site").mkdir(exist_ok=True)
 
-# The site's stylesheet, written out fresh on every build.
+# The site's style sheet, written out fresh on every build.
 css = """
-/* Whole page: near-black bleeding into deep blood-red, like firelight
-   in a dark room. The fixed gradient stays put as you scroll. */
-body {
-  margin: 0;
-  font-family: 'Cinzel', Georgia, 'Times New Roman', serif;
-  background:
-    radial-gradient(ellipse at 50% 40%, #3a0a10 0%, transparent 60%),
-    linear-gradient(180deg, #0c0a0d 0%, #1a0d11 45%, #0c0a0d 100%);
-  background-attachment: fixed;
-  color: #d8cfc4;
-  line-height: 1.7;
-  min-height: 100vh;
+/* ── Design tokens: tweak these to restyle everything at once ── */
+:root {
+  --bg-0: #131313;          /* deepest background (near-black) */
+  --bg-1: #1a0307;          /* page background, very dark red */
+  --card:  #2a0610;         /* card surface, deep crimson-brown */
+  --card-edge: #7a0213;     /* card border, dark blood red */
+  --ink:   #f7f1f2;         /* primary text, warm off-white */
+  --ink-soft: #c08a92;      /* secondary text, muted rose */
+  --accent: #cd0c2b;        /* the bright accent — signal red */
+  --accent-soft: rgba(205, 12, 43, 0.16);
+  --radius: 16px;
 }
 
-/* The sidebar: a darker panel with a crimson edge. */
+* { box-sizing: border-box; }
+
+/* Page: warm charcoal that lifts toward the centre. */
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background:
+    radial-gradient(ellipse at 70% 0%, #7a0213 0%, transparent 55%),
+    linear-gradient(180deg, var(--bg-1) 0%, var(--bg-0) 100%);
+  background-attachment: fixed;
+  color: var(--ink);
+  line-height: 1.7;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;   /* crisper text on Mac */
+}
+
+/* Sidebar: a flush dark rail, no heavy border. */
 nav {
   position: fixed;
   top: 0;
   left: 0;
-  width: 230px;
+  width: 240px;
   height: 100vh;
   box-sizing: border-box;
-  padding: 32px 18px;
-  background: linear-gradient(180deg, #120a0d 0%, #1c0c11 100%);
-  border-right: 1px solid #5a1018;
-  box-shadow: 2px 0 18px rgba(120, 10, 20, 0.35);
+  padding: 28px 16px;
+  background: var(--bg-0);
+  border-right: 1px solid var(--card-edge);
   overflow-y: auto;
 }
 
-/* Nav links: bone-white, small-caps, with a crimson hover glow. */
+/* Nav links: pill-shaped, soft until hovered. */
 nav a {
   display: block;
-  padding: 9px 12px;
-  margin-bottom: 4px;
-  color: #cbbfa8;
+  padding: 10px 14px;
+  margin-bottom: 2px;
+  border-radius: 10px;
+  color: var(--ink-soft);
   text-decoration: none;
-  font-size: 0.95rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  border-left: 2px solid transparent;
+  font-size: 0.9rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
   transition: all 0.15s ease;
 }
 nav a:hover {
-  color: #f3e9da;
-  border-left-color: #a01420;
-  background: linear-gradient(90deg, rgba(160, 20, 32, 0.25), transparent);
+  color: var(--ink);
+  background: var(--accent-soft);
 }
 
-/* Content area, clear of the sidebar. */
-main {
-  margin-left: 230px;
-  padding: 16px 48px 64px;
-}
-
-/* Headings: warm bone, wide elegant spacing, crimson underline on H1. */
-h1, h2, h3 {
-  color: #ece3d2;
-  margin-left: 48px;
-  margin-right: 48px;
-  max-width: 720px;
-  letter-spacing: 0.04em;
+/* Folder headings: small, muted, spaced labels. */
+nav .nav-group {
+  margin: 22px 0 8px;
+  padding: 0 14px;
+  color: var(--ink-soft);
+  font-size: 0.7rem;
   font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.7;
 }
+
+/* Content area: the markdown sits inside a centred card. */
+main {
+  margin-left: 240px;
+  padding: 48px;
+  display: flex;
+  justify-content: center;
+}
+
+/* The content card: lifts off the page with surface, border, padding. */
+.card {
+  background: var(--card);
+  border: 1px solid var(--card-edge);
+  border-radius: var(--radius);
+  padding: 40px 44px;
+  max-width: 820px;
+  width: 100%;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.35);
+}
+
+/* THE CARD — this is the big "modern app" move. */
+main > * {
+  width: 100%;
+}
+main {
+  /* wrapper handled below via .card if you wrap, but we style children
+     directly so no template change is needed */
+}
+
+/* Wrap the page content visually: give the whole content column a card. */
+body main {
+  align-items: flex-start;
+}
+
+/* Treat the markdown block as a card by styling main's inner content. */
+main {
+  /* the card look is applied to an inner wrapper we add next */
+}
+
+/* Typography hierarchy. */
+h1, h2, h3 { color: var(--ink); letter-spacing: -0.01em; font-weight: 700; }
 h1 {
-  margin-top: 36px;
-  font-size: 2.2rem;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #7a1018;
-  text-shadow: 0 0 18px rgba(160, 20, 32, 0.4);
+  font-size: 2.1rem;
+  margin: 0 0 8px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--card-edge);
 }
-h2 { font-size: 1.5rem; margin-top: 32px; }
+h2 { font-size: 1.4rem; margin: 32px 0 12px; }
+h3 { font-size: 1.1rem; margin: 24px 0 8px; }
 
-/* Body text and blocks. */
-p, ul, ol, pre, table {
-  margin-left: 48px;
-  margin-right: 48px;
-  max-width: 720px;
-  color: #d2c8bb;
-}
+p, ul, ol { color: var(--ink); max-width: 680px; }
 
-/* Content links: crimson, brightening on hover. */
+/* Content links: accent colour, underline grows on hover. */
 main a {
-  color: #c33141;
+  color: var(--accent);
   text-decoration: none;
-  border-bottom: 1px solid #5a1820;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.15s ease;
 }
-main a:hover {
-  color: #e85563;
-  border-bottom-color: #c33141;
-}
+main a:hover { border-bottom-color: var(--accent); }
 
-/* Code: inset dark slab. */
+/* Code. */
 code {
-  background: #1a1014;
-  color: #e0b0b6;
-  padding: 2px 6px;
-  border-radius: 3px;
-  font-size: 0.88em;
+  background: var(--bg-0);
+  color: #f0b49a;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 0.86em;
 }
 pre {
-  background: #140c10;
-  border: 1px solid #3a1218;
-  border-radius: 6px;
-  padding: 16px 18px;
+  background: var(--bg-0);
+  border: 1px solid var(--card-edge);
+  border-radius: 12px;
+  padding: 18px 20px;
   overflow-x: auto;
 }
-pre code { background: none; padding: 0; }
+pre code { background: none; padding: 0; color: var(--ink); }
 """
 
 with open("site/style.css", "w") as f:
     f.write(css)
 
 # First pass: collect info about every page.
-# We can't build a sidebar while coverting a single page, because that
-# page needs links to ALL pages, including ones we haven't read yet.
-# So we loop once just to gather title/url/order for every file first.
+# rglob (recursive) finds .md files in docs/ AND all its subfolders.
 pages = []
 
-for md_file in Path("docs").glob("*.md"):
+for md_file in Path("docs").rglob("*.md"):
     with open(md_file) as f:
         text = f.read()
 
     parts = text.split("---")
     meta = yaml.safe_load(parts[1])
     body = parts[2].strip()
+
+    # Which folder is this page i? "." means top-level, else e.g. "guide".
+    folder = md_file.parent.relative_to("docs")
 
     pages.append({
         "title": meta["title"],
@@ -140,28 +183,44 @@ for md_file in Path("docs").glob("*.md"):
         # use 999 so it sorts to the bottom instead of crashing.
         "order": meta.get("order", 999),
         "html": markdown.markdown(body),
+        "folder": str(folder),      # "." for top-level, "guide" for a subfolder.
     })
 
 # Sort pages by their order number.
 pages.sort(key=lambda p: p["order"])
 
-# Build the sidebar navigation HTML once, from the sorted list.
-# Single quotes outside so the double quotes in href="" don't collide.
-# Second pass: write each page out, using the data we already collected.
-# markdown.markdown() only returns a fragement (e.g. <h1>..</h1>, not a full
-# page. Wrap it in a complete HTML skeleton and slot in the title + body.
-# f-string: {meta["title"]} and {html} get replaced with those variable values.
-nav = ""
+# Group pages by their folder: {folder_name: [pages in it] }
+ # Classic group idiom: if the key isn't there yet, start a list, then append.
+groups = {}
 for p in pages:
+    folder = p["folder"]
+    if folder not in groups:
+        groups[folder] = []
+    groups[folder].append(p)
+
+# Build the sidebar from the grouped pages.
+nav = ""
+
+# Top-level pages first (folder "."), if any.
+for p in groups.get(".", []):
     nav += f'<a href="{p["url"]}">{p["title"]}</a><br>'
 
+# Then each subfolder as a titled section.
+for folder, folder_pages in groups.items():
+    if folder == ".":
+        continue
+    nav += f'<div class="nav-group">{folder}</div>'
+    for p in folder_pages:
+        nav += f'<a href="{p["url"]}">{p["title"]}</a><br>'
+
+# Second pass: write each page out, using the data we already collected
 for p in pages:
     page = f"""<!doctype html>
 <html>
 <head>
     <meta charset="utf-8">
     <title>{p["title"]}</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -169,7 +228,9 @@ for p in pages:
 {nav}
 </nav>
 <main>
-    {p["html"]}
+<div class="card">
+{p["html"]}
+</div>
 </main>
 </body>
 </html>"""
