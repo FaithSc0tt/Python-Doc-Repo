@@ -14,7 +14,7 @@
 
 * { box-sizing: border-box; }
 
-/* Page: warm charcoal that lifts toward the centre. */
+/* Page: deep red that lifts toward the top. */
 body {
   margin: 0;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -25,10 +25,10 @@ body {
   color: var(--ink);
   line-height: 1.7;
   min-height: 100vh;
-  -webkit-font-smoothing: antialiased;   /* crisper text on Mac */
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Sidebar: a flush dark rail, no heavy border. */
+/* Sidebar: a flush dark rail. */
 nav {
   position: fixed;
   top: 0;
@@ -89,25 +89,6 @@ main {
   max-width: 820px;
   width: 100%;
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.35);
-}
-
-/* THE CARD — this is the big "modern app" move. */
-main > * {
-  width: 100%;
-}
-main {
-  /* wrapper handled below via .card if you wrap, but we style children
-     directly so no template change is needed */
-}
-
-/* Wrap the page content visually: give the whole content column a card. */
-body main {
-  align-items: flex-start;
-}
-
-/* Treat the markdown block as a card by styling main's inner content. */
-main {
-  /* the card look is applied to an inner wrapper we add next */
 }
 
 /* Typography hierarchy. */

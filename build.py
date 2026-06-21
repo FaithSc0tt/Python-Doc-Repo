@@ -1,11 +1,14 @@
 import markdown
 import yaml
 from pathlib import Path
+import shutil
 
-# Make the output folder once, before the loop.
-Path("site").mkdir(exist_ok=True)
+# Start each build from a clean slate so old/renamed files don't linger.
+if Path("site").exists():
+    shutil.rmtree("site")
+Path("site").mkdir()
 
-# The site's style sheet, written out fresh on every build.
+# The site's stylesheet, written out fresh on every build.
 css = """
 /* ── Design tokens: tweak these to restyle everything at once ── */
 :root {
@@ -22,7 +25,7 @@ css = """
 
 * { box-sizing: border-box; }
 
-/* Page: warm charcoal that lifts toward the centre. */
+/* Page: deep red that lifts toward the top. */
 body {
   margin: 0;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -33,10 +36,10 @@ body {
   color: var(--ink);
   line-height: 1.7;
   min-height: 100vh;
-  -webkit-font-smoothing: antialiased;   /* crisper text on Mac */
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Sidebar: a flush dark rail, no heavy border. */
+/* Sidebar: a flush dark rail. */
 nav {
   position: fixed;
   top: 0;
@@ -99,25 +102,6 @@ main {
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.35);
 }
 
-/* THE CARD — this is the big "modern app" move. */
-main > * {
-  width: 100%;
-}
-main {
-  /* wrapper handled below via .card if you wrap, but we style children
-     directly so no template change is needed */
-}
-
-/* Wrap the page content visually: give the whole content column a card. */
-body main {
-  align-items: flex-start;
-}
-
-/* Treat the markdown block as a card by styling main's inner content. */
-main {
-  /* the card look is applied to an inner wrapper we add next */
-}
-
 /* Typography hierarchy. */
 h1, h2, h3 { color: var(--ink); letter-spacing: -0.01em; font-weight: 700; }
 h1 {
@@ -173,24 +157,26 @@ for md_file in Path("docs").rglob("*.md"):
     meta = yaml.safe_load(parts[1])
     body = parts[2].strip()
 
-    # Which folder is this page i? "." means top-level, else e.g. "guide".
+    # rel is the path from docs/ (e.g. guide/setup.md); folder is just the
+    # subfolder ("." for top-level, "guide" for a subfolder).
+    rel = md_file.relative_to("docs")
     folder = md_file.parent.relative_to("docs")
 
     pages.append({
         "title": meta["title"],
-        "url": md_file.stem + ".html",
-        # .get() with a fallback: if a page forgot to set order
+        "url": str(rel.with_suffix(".html")),   # guide/setup.html (or hello.html)
+        # .get() with a fallback: if a page forgot to set order,
         # use 999 so it sorts to the bottom instead of crashing.
         "order": meta.get("order", 999),
         "html": markdown.markdown(body),
-        "folder": str(folder),      # "." for top-level, "guide" for a subfolder.
+        "folder": str(folder),
     })
 
 # Sort pages by their order number.
 pages.sort(key=lambda p: p["order"])
 
-# Group pages by their folder: {folder_name: [pages in it] }
- # Classic group idiom: if the key isn't there yet, start a list, then append.
+# Group pages by their folder: {folder_name: [pages in it]}
+# Classic group idiom: if the key isn't there yet, start a list, then append.
 groups = {}
 for p in pages:
     folder = p["folder"]
@@ -198,30 +184,34 @@ for p in pages:
         groups[folder] = []
     groups[folder].append(p)
 
-# Build the sidebar from the grouped pages.
-nav = ""
-
-# Top-level pages first (folder "."), if any.
-for p in groups.get(".", []):
-    nav += f'<a href="{p["url"]}">{p["title"]}</a><br>'
-
-# Then each subfolder as a titled section.
-for folder, folder_pages in groups.items():
-    if folder == ".":
-        continue
-    nav += f'<div class="nav-group">{folder}</div>'
-    for p in folder_pages:
-        nav += f'<a href="{p["url"]}">{p["title"]}</a><br>'
-
-# Second pass: write each page out, using the data we already collected
+# Second pass: write each page, building its nav with the right path prefix.
 for p in pages:
+    # How deep is this page? Count the slashes in its url.
+    depth = p["url"].count("/")
+    prefix = "../" * depth          # "", "../", "../../", ...
+
+    # Build this page's sidebar fresh, prefixing every link so it resolves
+    # correctly no matter how deep the current page sits.
+    nav = ""
+    # Top-level pages first (folder "."), if any.
+    for top in groups.get(".", []):
+        nav += f'<a href="{prefix}{top["url"]}">{top["title"]}</a><br>'
+    # Then each subfolder as a titled section.
+    for folder, folder_pages in groups.items():
+        if folder == ".":
+            continue
+        nav += f'<div class="nav-group">{folder}</div>'
+        for fp in folder_pages:
+            nav += f'<a href="{prefix}{fp["url"]}">{fp["title"]}</a><br>'
+
+    # Build the full page.
     page = f"""<!doctype html>
 <html>
 <head>
     <meta charset="utf-8">
     <title>{p["title"]}</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="{prefix}style.css">
 </head>
 <body>
 <nav>
@@ -235,7 +225,10 @@ for p in pages:
 </body>
 </html>"""
 
-    with open("site/" + p["url"], "w") as f:
+    # Write it, creating the page's folder if needed.
+    out_path = Path("site") / p["url"]
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(out_path, "w") as f:
         f.write(page)
 
     print("Wrote site/" + p["url"])
